@@ -15,7 +15,7 @@ DB_PATH = "erootg.db"
 ADMIN_PASSWORD = "EROTG1234"
 
 # === THAY URL NÀY BẰNG WEBHOOK CỦA BẠN ===
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/..."  # 👈 PASTE LINK CỦA BẠN VÀO ĐÂY
+DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK', '')
 
 # Danh sách bot User-Agent
 BOT_USER_AGENTS = [
