@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>EROOTG IP Logger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f0f0f0;
+            font-family: 'Courier New', 'Consolas', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .box {
+            max-width: 760px;
+            width: 100%;
+            background: #ffffff;
+            border: 4px solid #111;
+            padding: 40px 38px 35px;
+            box-shadow: 12px 12px 0 rgba(0,0,0,0.04);
+        }
+
+        /* Logo chữ đơn giản */
+        .logo {
+            border-bottom: 3px solid #111;
+            padding-bottom: 14px;
+            margin-bottom: 22px;
+        }
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+            color: #111;
+            margin: 0;
+        }
+        .logo .sub {
+            font-size: 14px;
+            color: #555;
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Status */
+        .status {
+            background: #f5f5f5;
+            border: 2px solid #ccc;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            font-size: 15px;
+            margin-bottom: 22px;
+        }
+        .status .live {
+            color: #006600;
+            font-weight: 700;
+        }
+        .status .live::before {
+            content: "● ";
+            color: #00aa00;
+        }
+        .status .ver {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* Thông tin */
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 15px;
+        }
+        .row:last-child { border: none; }
+        .label { color: #555; }
+        .value { font-weight: 700; color: #111; }
+
+        /* Nút bấm */
+        .links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+        .links a {
+            background: #111;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 30px;
+            border: 2px solid #111;
+            font-weight: 700;
+            font-size: 15px;
+            font-family: 'Courier New', monospace;
+            transition: 0.08s linear;
+            cursor: pointer;
+            text-align: center;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+        .links a:hover {
+            background: #fff;
+            color: #111;
+        }
+        .links a.outline {
+            background: #fff;
+            color: #111;
+        }
+        .links a.outline:hover {
+            background: #111;
+            color: #fff;
+        }
+
+        .footer {
+            margin-top: 32px;
+            font-size: 13px;
+            color: #888;
+            border-top: 2px solid #eee;
+            padding-top: 18px;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .footer .team {
+            color: #111;
+            font-weight: 700;
+        }
+        .badge {
+            display: inline-block;
+            background: #111;
+            color: #fff;
+            padding: 0 14px;
+            font-size: 12px;
+            line-height: 26px;
+            border: 1px solid #111;
+        }
+
+        @media (max-width: 500px) {
+            .box { padding: 20px 16px; }
+            .logo h1 { font-size: 22px; }
+            .links a { flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+
+    <!-- LOGO -->
+    <div class="logo">
+        <h1>
+            EROOTG
+            <span class="sub">IP Logger • Classic</span>
+        </h1>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status">
+        <span class="live">He thong dang hoat dong</span>
+        <span class="ver">v1.0</span>
+    </div>
+
+    <!-- THÔNG TIN -->
+    <div class="row">
+        <span class="label">Thoi gian</span>
+        <span class="value" id="clock">--:--:--</span>
+    </div>
+    <div class="row">
+        <span class="label">Track endpoint</span>
+        <span class="value">/track</span>
+    </div>
+    <div class="row">
+        <span class="label">Tong log</span>
+        <span class="value" id="totalLogs">0</span>
+    </div>
+    <div class="row">
+        <span class="label">Hieu suat</span>
+        <span class="value">SQLite + Cache</span>
+    </div>
+
+    <!-- NÚT -->
+    <div class="links">
+        <a href="/logs">Xem Log</a>
+        <a href="/track" class="outline" target="_blank">Track IP</a>
+        <a href="/export" class="outline">Export CSV</a>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <span class="team">EROTG Grey Hat Team</span> • Toc do toi da • Classic Edition
+    </div>
+
+</div>
+
+<script>
+    // Dong ho
+    function updateClock() {
+        document.getElementById('clock').textContent = new Date().toLocaleString('vi-VN');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Lay tong log
+    fetch('/stats')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('totalLogs').textContent = data.total || 0;
+        })
+        .catch(() => {});
+</script>
+</body>
+</html>
