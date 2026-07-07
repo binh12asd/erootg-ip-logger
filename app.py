@@ -12,7 +12,7 @@ app.secret_key = 'erootg_secret_key_2025'
 
 # ====== CẤU HÌNH ======
 DB_PATH = "erootg.db"
-ADMIN_PASSWORD = "EROTG1234"
+ADMIN_PASSWORD = "EROOTG1234"
 
 # === THAY URL NÀY BẰNG WEBHOOK CỦA BẠN ===
 DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK', '')
