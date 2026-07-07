@@ -14,6 +14,9 @@ app.secret_key = 'erootg_secret_key_2025'
 DB_PATH = "erootg.db"
 ADMIN_PASSWORD = "EROTG1234"
 
+# === THAY URL NÀY BẰNG WEBHOOK CỦA BẠN ===
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/..."  # 👈 PASTE LINK CỦA BẠN VÀO ĐÂY
+
 # Danh sách bot User-Agent
 BOT_USER_AGENTS = [
     'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
@@ -82,6 +85,24 @@ def is_bot(ua):
             return True
     return False
 
+# ====== GỬI THÔNG BÁO DISCORD ======
+def send_discord_alert(ip, ua, country, city, isp):
+    if not DISCORD_WEBHOOK:
+        return
+    try:
+        message = (
+            f"🆕 **IP Mới Được Track!**\n"
+            f"📌 IP: `{ip}`\n"
+            f"🌍 Quốc gia: {country}\n"
+            f"🏙️ Thành phố: {city}\n"
+            f"📡 ISP: {isp}\n"
+            f"📱 UA: `{ua[:80]}`\n"
+            f"🕒 Thời gian: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        requests.post(DISCORD_WEBHOOK, json={"content": message}, timeout=2)
+    except Exception as e:
+        print(f"Lỗi gửi Discord: {e}")
+
 # ====== GHI LOG ======
 def save_log(ip, ua, ref, country='', city='', isp='', is_bot=False):
     conn = sqlite3.connect(DB_PATH)
@@ -123,6 +144,10 @@ def track():
     country, city, isp = get_geo(ip)
     bot = is_bot(ua)
     save_log(ip, ua, ref, country, city, isp, bot)
+    
+    # === GỬI THÔNG BÁO DISCORD ===
+    send_discord_alert(ip, ua, country, city, isp)
+    # =============================
     
     pixel = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
     return send_file(BytesIO(pixel), mimetype='image/gif')
