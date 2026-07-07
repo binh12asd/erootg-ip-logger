@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - EROOTG Logger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f0f0f0;
+            font-family: 'Courier New', 'Consolas', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .box {
+            max-width: 420px;
+            width: 100%;
+            background: #ffffff;
+            border: 4px solid #111;
+            padding: 40px 35px;
+            box-shadow: 12px 12px 0 rgba(0,0,0,0.04);
+        }
+        .box .logo {
+            border-bottom: 3px solid #111;
+            padding-bottom: 14px;
+            margin-bottom: 22px;
+        }
+        .box .logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            color: #111;
+            margin: 0;
+        }
+        .box .logo .sub {
+            font-size: 13px;
+            color: #555;
+            display: block;
+            margin-top: 2px;
+        }
+        .box .desc {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .box input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #ccc;
+            border-radius: 0;
+            background: #fff;
+            color: #111;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: 0.1s;
+        }
+        .box input:focus {
+            border-color: #111;
+            box-shadow: 4px 4px 0 rgba(0,0,0,0.05);
+        }
+        .box button {
+            width: 100%;
+            padding: 14px;
+            background: #111;
+            border: 2px solid #111;
+            border-radius: 0;
+            color: #fff;
+            font-weight: 700;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin-top: 14px;
+            transition: 0.08s linear;
+        }
+        .box button:hover {
+            background: #fff;
+            color: #111;
+        }
+        .error {
+            color: #cc0000;
+            text-align: center;
+            margin-top: 14px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 24px;
+            font-size: 13px;
+            color: #888;
+            border-top: 2px solid #eee;
+            padding-top: 16px;
+            text-align: center;
+        }
+        .footer .team {
+            color: #111;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="logo">
+        <h1>
+            EROOTG
+            <span class="sub">IP Logger • Classic</span>
+        </h1>
+    </div>
+    <div class="desc">🔒 Nhập mật khẩu để xem log</div>
+    <form method="POST">
+        <input type="password" name="password" placeholder="Mật khẩu" autofocus>
+        <button type="submit">Đăng nhập</button>
+    </form>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <div class="footer">
+        <span class="team">EROTG Grey Hat Team</span> • Classic Edition
+    </div>
+</div>
+</body>
+</html>
+</body>
+</html>
