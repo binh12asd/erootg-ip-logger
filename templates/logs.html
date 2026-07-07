@@ -5,37 +5,183 @@
     <title>EROOTG - IP Logs</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #f5f5f5; font-family: 'Courier New', monospace; padding: 30px 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; border-bottom: 4px solid #111; padding-bottom: 14px; margin-bottom: 24px; }
-        .header h1 { font-size: 24px; font-weight: 700; margin: 0; font-family: 'Courier New', monospace; }
-        .header h1 small { font-size: 13px; font-weight: 400; color: #555; }
-        .header .count { font-size: 14px; background: #f0f0f0; padding: 4px 18px; border: 2px solid #ccc; font-weight: 600; }
-        table { width: 100%; border-collapse: collapse; border: 2px solid #111; font-size: 14px; }
-        th { background: #111; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; border: 1px solid #111; }
-        td { padding: 8px 12px; border: 1px solid #ddd; vertical-align: top; font-size: 13px; }
-        tr:nth-child(even) td { background: #f9f9f9; }
-        tr:hover td { background: #f0f0f0; }
-        .ip { font-weight: 700; color: #000; }
-        .ua { font-size: 11px; color: #555; word-break: break-all; }
-        .time { color: #444; font-size: 12px; white-space: nowrap; }
-        .geo { font-size: 12px; }
-        .back { display: inline-block; margin-top: 24px; background: #111; color: #fff; padding: 10px 28px; text-decoration: none; border: 2px solid #111; font-weight: 600; font-family: 'Courier New', monospace; }
-        .back:hover { background: #fff; color: #111; }
-        .empty { text-align: center; padding: 60px 20px; font-size: 18px; color: #888; border: 2px dashed #ccc; }
-        .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
-        .pagination a, .pagination span { background: #fff; padding: 6px 16px; border: 2px solid #ccc; color: #111; text-decoration: none; font-weight: 600; font-size: 14px; }
-        .pagination a:hover { background: #111; color: #fff; border-color: #111; }
-        .pagination .current { background: #111; color: #fff; border-color: #111; }
-        .filter-bar { margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .filter-bar a { background: #f0f0f0; padding: 6px 16px; border: 2px solid #ccc; color: #111; text-decoration: none; font-weight: 600; font-size: 13px; }
-        .filter-bar a:hover { background: #111; color: #fff; border-color: #111; }
-        .filter-bar a.active { background: #111; color: #fff; border-color: #111; }
-        .footer { margin-top: 30px; font-size: 13px; color: #888; border-top: 2px solid #eee; padding-top: 16px; text-align: center; }
-        @media (max-width: 700px) { table { font-size: 12px; } th, td { padding: 5px 6px; } .header { flex-direction: column; align-items: stretch; gap: 8px; } .time { white-space: normal; } }
+        body {
+            background: #f0f0f0;
+            font-family: 'Courier New', 'Consolas', monospace;
+            padding: 30px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            border-bottom: 4px solid #111;
+            padding-bottom: 14px;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+        }
+        .header h1 small {
+            font-size: 13px;
+            font-weight: 400;
+            color: #555;
+        }
+        .header .count {
+            font-size: 14px;
+            background: #f0f0f0;
+            padding: 4px 18px;
+            border: 2px solid #ccc;
+            font-weight: 600;
+        }
+        .filter-bar {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-bar a {
+            background: #f0f0f0;
+            padding: 6px 16px;
+            border: 2px solid #ccc;
+            color: #111;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+        .filter-bar a:hover {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+        .filter-bar a.active {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #111;
+            font-size: 14px;
+        }
+        th {
+            background: #111;
+            color: #fff;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #111;
+        }
+        td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+            font-size: 13px;
+        }
+        tr:nth-child(even) td {
+            background: #f9f9f9;
+        }
+        tr:hover td {
+            background: #f0f0f0;
+        }
+        .ip {
+            font-weight: 700;
+            color: #000;
+        }
+        .ua {
+            font-size: 11px;
+            color: #555;
+            word-break: break-all;
+        }
+        .time {
+            color: #444;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .geo {
+            font-size: 12px;
+        }
+        .back {
+            display: inline-block;
+            margin-top: 24px;
+            background: #111;
+            color: #fff;
+            padding: 10px 28px;
+            text-decoration: none;
+            border: 2px solid #111;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        .back:hover {
+            background: #fff;
+            color: #111;
+        }
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 18px;
+            color: #888;
+            border: 2px dashed #ccc;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            background: #fff;
+            padding: 6px 16px;
+            border: 2px solid #ccc;
+            color: #111;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        .pagination a:hover {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+        .pagination .current {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #888;
+            border-top: 2px solid #eee;
+            padding-top: 16px;
+            text-align: center;
+        }
+        .footer .team {
+            color: #111;
+            font-weight: 700;
+        }
+        @media (max-width: 700px) {
+            table { font-size: 12px; }
+            th, td { padding: 5px 6px; }
+            .header { flex-direction: column; align-items: stretch; gap: 8px; }
+            .time { white-space: normal; }
+        }
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="header">
         <h1>EROOTG <small>IP Logs</small></h1>
@@ -44,17 +190,25 @@
 
     <div class="filter-bar">
         {% if show_bot %}
-        <a href="/logs" class="">🔍 Ẩn bot</a>
-        <a href="/logs?show_bot=1" class="active">🤖 Hiện bot</a>
+        <a href="/logs">An bot</a>
+        <a href="/logs?show_bot=1" class="active">Hien bot</a>
         {% else %}
-        <a href="/logs" class="active">🔍 Ẩn bot</a>
-        <a href="/logs?show_bot=1" class="">🤖 Hiện bot</a>
+        <a href="/logs" class="active">An bot</a>
+        <a href="/logs?show_bot=1">Hien bot</a>
         {% endif %}
     </div>
 
     {% if logs %}
     <table>
-        <thead><tr><th>IP</th><th>Geo</th><th>ISP</th><th>Thoi gian</th><th>User-Agent</th></tr></thead>
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>Geo</th>
+                <th>ISP</th>
+                <th>Thoi gian</th>
+                <th>User-Agent</th>
+            </tr>
+        </thead>
         <tbody>
             {% for log in logs %}
             <tr>
@@ -62,24 +216,39 @@
                 <td class="geo">{{ log.country }}{% if log.city and log.country != 'N/A' %} - {{ log.city }}{% endif %}</td>
                 <td class="geo">{{ log.isp }}</td>
                 <td class="time">{{ log.time }}</td>
-                <td class="ua">{{ log.ua[:80] }}{% if log.ua|length > 80 %}...{% endif %}{% if log.is_bot %} 🤖{% endif %}</td>
+                <td class="ua">{{ log.ua[:80] }}{% if log.ua|length > 80 %}...{% endif %}{% if log.is_bot %} [BOT]{% endif %}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
     <div class="pagination">
-        {% if page > 1 %}<a href="?page={{ page - 1 }}{% if show_bot %}&show_bot=1{% endif %}">◀</a>{% endif %}
+        {% if page > 1 %}
+        <a href="?page={{ page - 1 }}{% if show_bot %}&show_bot=1{% endif %}">◀</a>
+        {% endif %}
+
         {% for p in range(1, total_pages + 1) %}
-            {% if p == page %}<span class="current">{{ p }}</span>{% elif p <= page + 3 and p >= page - 3 %}<a href="?page={{ p }}{% if show_bot %}&show_bot=1{% endif %}">{{ p }}</a>{% endif %}
+            {% if p == page %}
+            <span class="current">{{ p }}</span>
+            {% elif p <= page + 3 and p >= page - 3 %}
+            <a href="?page={{ p }}{% if show_bot %}&show_bot=1{% endif %}">{{ p }}</a>
+            {% endif %}
         {% endfor %}
-        {% if page < total_pages %}<a href="?page={{ page + 1 }}{% if show_bot %}&show_bot=1{% endif %}">▶</a>{% endif %}
+
+        {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}{% if show_bot %}&show_bot=1{% endif %}">▶</a>
+        {% endif %}
     </div>
     {% else %}
-    <div class="empty">📭 Chua co log nao</div>
+    <div class="empty">Chua co log nao</div>
     {% endif %}
-    
+
     <a href="/" class="back">← Trang chu</a>
-    <div class="footer">EROTG Grey Hat Team • Classic Performance Edition</div>
+
+    <div class="footer">
+        <span class="team">EROTG Grey Hat Team</span> • Classic Edition
+    </div>
 </div>
+
 </body>
 </html>
