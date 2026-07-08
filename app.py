@@ -6,13 +6,13 @@ import requests
 from io import BytesIO
 
 app = Flask(__name__)
-app.secret_key = 'EROOTG123'  # Secret key mới
+app.secret_key = 'EROTG123'
 
 # === CẤU HÌNH ===
-ADMIN_PASSWORD = "EROOTG123"  # Mật khẩu đăng nhập mới
-DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK', '')
+ADMIN_PASSWORD = "EROTG123"
 LOG_DIR = "logs"
 MAX_LINES_PER_FILE = 100
+DISCORD_WEBHOOK = os.environ.get('DISCORD_WEBHOOK', '')
 
 # Tạo thư mục logs nếu chưa có
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -35,7 +35,17 @@ def get_current_log_file():
 # === HÀM GHI LOG ===
 def save_log_to_file(ip, ua, ref, country, city, isp, source='unknown'):
     file_path = get_current_log_file()
-    log_entry = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] IP: {ip} | Quốc gia: {country} | Thành phố: {city} | ISP: {isp} | Nguồn: {source} | UA: {ua[:100]}\n"
+    log_entry = f"""{'='*50}
+🆕 IP Mới Được Track!
+📌 IP: {ip}
+🌍 Quốc gia: {country}
+🏙️ Thành phố: {city}
+📡 ISP: {isp}
+📂 Nguồn: {source}
+📱 UA: {ua[:100]}
+🕒 Thời gian: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+{'='*50}
+"""
     with open(file_path, 'a', encoding='utf-8') as f:
         f.write(log_entry)
 
@@ -50,7 +60,24 @@ def read_all_logs():
                 all_logs.append(line.strip())
     return all_logs
 
-# === CÁC HÀM KHÁC ===
+# === GỬI LOG VỀ MÁY TÍNH LOCAL ===
+def send_log_to_local(ip, country, city, isp, source, ua):
+    try:
+        local_server = "http://localhost:5000/log"  # Đổi thành IP máy tính + port thật nếu dùng ngrok
+        data = {
+            'ip': ip,
+            'country': country,
+            'city': city,
+            'isp': isp,
+            'source': source,
+            'ua': ua,
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        requests.post(local_server, json=data, timeout=2)
+    except Exception as e:
+        print(f"⚠️ Không gửi được log về local: {e}")
+
+# === CÁC HÀM TIỆN ÍCH ===
 def get_real_ip(request):
     cf = request.headers.get('CF-Connecting-IP')
     if cf: return cf
@@ -109,8 +136,17 @@ def track_with_source(source):
     ua = request.headers.get('User-Agent', '')
     ref = request.headers.get('Referer', '')
     country, city, isp = get_geo(ip)
+    bot = is_bot(ua)
+    
+    # Ghi log vào file trên Render
     save_log_to_file(ip, ua, ref, country, city, isp, source)
+    
+    # Gửi log về máy tính local
+    send_log_to_local(ip, country, city, isp, source, ua)
+    
+    # Gửi Discord alert (nếu có webhook)
     send_discord_alert(ip, ua, country, city, isp, source)
+    
     pixel = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
     return send_file(BytesIO(pixel), mimetype='image/gif')
 
@@ -118,6 +154,7 @@ def track_with_source(source):
 def view_logs():
     if not session.get('logged_in', False):
         return redirect(url_for('login_page'))
+    
     logs = read_all_logs()
     logs_html = "<br>".join(logs)
     return f"""
