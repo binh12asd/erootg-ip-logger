@@ -6,7 +6,7 @@ import requests
 from io import BytesIO
 import csv
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -74,7 +74,6 @@ def read_all_logs(filter_country=None, filter_isp=None, filter_source=None, days
             for entry in entries:
                 if not entry.strip():
                     continue
-                # Parse log entry
                 lines = entry.strip().split('\n')
                 log_data = {}
                 for line in lines:
@@ -82,16 +81,12 @@ def read_all_logs(filter_country=None, filter_isp=None, filter_source=None, days
                         key, value = line.split(': ', 1)
                         log_data[key.strip()] = value.strip()
                 
-                # Lọc theo quốc gia
                 if filter_country and log_data.get('🌍 Quốc gia', '') != filter_country:
                     continue
-                # Lọc theo ISP
                 if filter_isp and log_data.get('📡 ISP', '') != filter_isp:
                     continue
-                # Lọc theo nguồn
                 if filter_source and log_data.get('📂 Nguồn', '') != filter_source:
                     continue
-                # Lọc theo thời gian
                 if cutoff_date:
                     try:
                         log_time = datetime.strptime(log_data.get('🕒 Thời gian', ''), '%Y-%m-%d %H:%M:%S')
@@ -107,14 +102,16 @@ def read_all_logs(filter_country=None, filter_isp=None, filter_source=None, days
 # === HÀM XÓA LOG CŨ ===
 def delete_old_logs():
     cutoff_date = datetime.now() - timedelta(days=LOG_RETENTION_DAYS)
+    deleted = 0
     files = [f for f in os.listdir(LOG_DIR) if f.startswith("logs_") and f.endswith(".txt")]
     for file in files:
         file_path = os.path.join(LOG_DIR, file)
-        # Kiểm tra file có log cũ không (dựa trên thời gian sửa file)
         file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         if file_mtime < cutoff_date:
             os.remove(file_path)
+            deleted += 1
             print(f"🗑️ Đã xóa file log cũ: {file}")
+    return deleted
 
 # === CÁC HÀM TIỆN ÍCH ===
 def get_real_ip(request):
@@ -126,16 +123,47 @@ def get_real_ip(request):
     if xri: return xri
     return request.remote_addr
 
-@lru_cache(maxsize=1000)
+@lru_cache(maxsize=2000)
 def get_geo(ip):
-    try:
-        r = requests.get(f'http://ip-api.com/json/{ip}?fields=status,country,city,isp', timeout=2)
-        data = r.json()
-        if data.get('status') == 'success':
-            return data.get('country', ''), data.get('city', ''), data.get('isp', '')
-    except:
-        pass
-    return '', '', ''
+    # Dữ liệu mẫu cho localhost và IP nội bộ
+    if ip.startswith('127.') or ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.'):
+        return 'Local', 'Local', 'Local'
+    
+    # Danh sách API dự phòng
+    apis = [
+        f'http://ip-api.com/json/{ip}?fields=status,country,city,isp',
+        f'https://ipinfo.io/{ip}/json',
+        f'https://ipapi.co/{ip}/json/'
+    ]
+    
+    for url in apis:
+        try:
+            r = requests.get(url, timeout=3)
+            if r.status_code != 200:
+                continue
+            
+            data = r.json()
+            
+            # Xử lý ip-api.com
+            if 'status' in data and data.get('status') == 'success':
+                return data.get('country', ''), data.get('city', ''), data.get('isp', '')
+            
+            # Xử lý ipinfo.io
+            if 'country' in data:
+                country = data.get('country', '')
+                city = data.get('city', '')
+                isp = data.get('org', '').split(' ')[0] if data.get('org') else ''
+                return country, city, isp
+            
+            # Xử lý ipapi.co
+            if 'country_name' in data:
+                return data.get('country_name', ''), data.get('city', ''), data.get('org', '')
+                
+        except:
+            continue
+    
+    # Nếu tất cả API đều thất bại
+    return 'Unknown', 'Unknown', 'Unknown'
 
 def is_bot(ua):
     BOT_USER_AGENTS = ['Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
@@ -194,13 +222,8 @@ def track_with_source(source):
     country, city, isp = get_geo(ip)
     bot = is_bot(ua)
     
-    # Ghi log vào file trên Render
     save_log_to_file(ip, ua, ref, country, city, isp, source)
-    
-    # Gửi log về máy tính local (nếu có)
     send_log_to_local(ip, country, city, isp, source, ua)
-    
-    # Gửi Discord alert (nếu có webhook)
     send_discord_alert(ip, ua, country, city, isp, source)
     
     pixel = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
@@ -211,7 +234,6 @@ def view_logs():
     if not session.get('logged_in', False):
         return redirect(url_for('login_page'))
     
-    # Lấy tham số lọc
     country = request.args.get('country', '')
     isp = request.args.get('isp', '')
     source = request.args.get('source', '')
@@ -222,10 +244,8 @@ def view_logs():
                          source if source else None, 
                          days)
     
-    # Đếm số log
     total = len(logs)
     
-    # Render HTML
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -271,7 +291,7 @@ def view_logs():
         
         <div class="stats">
             <div class="item"><span class="num">{total}</span> Tổng logs</div>
-            <div class="item"><span class="num">{len(set(log['📌 IP'] for log in logs)) if logs else 0}</span> IP duy nhất</div>
+            <div class="item"><span class="num">{len(set(log.get('📌 IP', '') for log in logs)) if logs else 0}</span> IP duy nhất</div>
             <div class="item"><span class="num">{len(set(log.get('🌍 Quốc gia', '') for log in logs)) if logs else 0}</span> Quốc gia</div>
         </div>
         
@@ -338,18 +358,9 @@ def dashboard():
     
     logs = read_all_logs()
     
-    # Thống kê theo quốc gia
     countries = Counter([log.get('🌍 Quốc gia', 'Unknown') for log in logs])
-    country_labels = list(countries.keys())
-    country_values = list(countries.values())
-    
-    # Thống kê theo nguồn
     sources = Counter([log.get('📂 Nguồn', 'unknown') for log in logs])
-    source_labels = list(sources.keys())
-    source_values = list(sources.values())
     
-    # Thống kê theo ngày (30 ngày gần nhất)
-    from collections import defaultdict
     daily = defaultdict(int)
     for log in logs:
         try:
@@ -360,7 +371,6 @@ def dashboard():
     dates = sorted(daily.keys())[-30:]
     daily_values = [daily[date] for date in dates]
     
-    # Tạo biểu đồ (đơn giản hóa bằng HTML/CSS)
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -410,7 +420,7 @@ def dashboard():
             <div class="card">
                 <h3>🌍 Top Quốc Gia</h3>
     """
-    max_val = max(country_values) if country_values else 1
+    max_val = max(countries.values()) if countries else 1
     for label, value in sorted(countries.items(), key=lambda x: -x[1])[:10]:
         percent = (value / max_val) * 100 if max_val > 0 else 0
         html += f"""
@@ -426,7 +436,7 @@ def dashboard():
             <div class="card">
                 <h3>📂 Top Nguồn Track</h3>
     """
-    max_val = max(source_values) if source_values else 1
+    max_val = max(sources.values()) if sources else 1
     for label, value in sorted(sources.items(), key=lambda x: -x[1])[:10]:
         percent = (value / max_val) * 100 if max_val > 0 else 0
         html += f"""
@@ -536,4 +546,4 @@ def cleanup():
     return f"🗑️ Đã xóa {deleted} file log cũ hơn {LOG_RETENTION_DAYS} ngày. <a href='/logs'>Quay lại</a>"
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(host='0.0.0.0', port=5000)
